@@ -57,6 +57,32 @@ API behavior.
    - After discovery, design our own cleaner client around confirmed API calls.
    - Keep this later app separate from raw reverse-engineering output.
 
+## Internal Notes Index
+
+Start with these repository notes before repeating discovery work:
+
+- `notes/references.md`: central index of useful public links, local reports,
+  observed non-secret endpoints, protocol shapes, and tooling references.
+- `notes/common-report.md`: cross-APK summary and the main conclusion that the
+  apps use Xtream/XC, XMLTV, local playback URLs, plus some M3U/Stalker modes.
+- `notes/public-protocol-research.md`: internet research for Xtream/XC,
+  Stalker/MAG, XMLTV, M3U Plus, HLS, and public metadata sources.
+- `notes/xtream-api-coverage.md`: endpoint-by-endpoint coverage notes used to
+  create the OpenAPI draft.
+- `openapi/xtream-compatible.yaml`: current unofficial OpenAPI 3.1 draft for
+  the Xtream-compatible API surface.
+- `notes/api-map.md`: detailed NOX-focused endpoint map with code references
+  into `out/jadx` and `out/apktool`.
+- `notes/noxpro.md`: NOX PRO APK findings, including bootstrap and activation
+  flow.
+- `notes/ironmax.md`: IRON TV MAX APK findings, including native bootstrap
+  evidence.
+- `notes/irontv48.md`: IRON TV PRO APK findings, parallel to IRON TV MAX.
+- `notes/mytv.md`: MyTVOnline3/Formuler findings for XTC, Stalker/MAG, and M3U
+  modes.
+- `notes/investigation-log.md`: reproducible command log, decode locations,
+  probe summaries, and generated-output paths.
+
 ## Nix Tooling
 
 This machine has Nix available. Prefer temporary, reproducible tool environments

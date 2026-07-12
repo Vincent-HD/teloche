@@ -60,7 +60,9 @@ paths:
         VOD, series, and JSON EPG calls.
 
         When `action` is omitted, panels usually return account profile data
-        containing `user_info` and `server_info`.
+        containing `user_info` and `server_info`. Some panels also support the
+        explicit `get_profile` and `get_server_info` actions, returning the same
+        combined profile shape.
       parameters:
         - $ref: "#/components/parameters/Username"
         - $ref: "#/components/parameters/Password"
@@ -71,6 +73,8 @@ paths:
           schema:
             type: string
             enum:
+              - get_profile
+              - get_server_info
               - get_live_categories
               - get_live_streams
               - get_vod_categories
@@ -172,6 +176,12 @@ paths:
           description: Endpoint unavailable on this panel.
       x-xtream-actions:
         omitted:
+          returns: LoginResponse
+          confidence: high
+        get_profile:
+          returns: LoginResponse
+          confidence: high
+        get_server_info:
           returns: LoginResponse
           confidence: high
         get_live_categories:

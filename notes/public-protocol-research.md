@@ -5,6 +5,9 @@ Date: 2026-07-12
 This note supplements the static APK findings with public internet sources that
 help explain the protocol surface we uncovered.
 
+For a compact index of local reports, public links, observed non-secret
+endpoints, and tooling references, see `notes/references.md`.
+
 It is meant to answer two questions:
 
 1. Which parts of the IPTV behavior we found are publicly documented or at least

@@ -14,7 +14,8 @@ This report compares the four APKs currently in `apks/`:
 | `mytv.apk` | `tv.formuler.mol3.real` | `MYTVOnline3` | `120133` / `12.1.33-5002-c58fe71f8` | `bd9bb80f311d21e6a37a0c7809cf8c742f949f7396bac5307b21cd2033f74d8e` |
 
 For public internet sources that support or contextualize these findings, see
-`notes/public-protocol-research.md`.
+`notes/public-protocol-research.md`. For the central link/resource index, see
+`notes/references.md`.
 
 ## Main Conclusion
 
