@@ -1,0 +1,978 @@
+openapi: 3.1.0
+info:
+  title: Xtream-Compatible IPTV API
+  version: 0.1.0
+  license:
+    name: CC0-1.0
+    identifier: CC0-1.0
+  summary: Unofficial OpenAPI draft for the Xtream/XC player-facing API surface.
+  description: |
+    Unofficial compatibility draft synthesized from static APK analysis, public
+    Xtream/XC documentation mirrors, public client implementations, and a small
+    live read-only probe against one working Xtream-compatible panel.
+
+    This is not an official Xtream Codes or Xtream UI specification. Real panels
+    vary in field types, optional fields, URL support, and error behavior.
+
+    Xtream multiplexes many catalog operations through a single endpoint,
+    `GET /player_api.php`, selected by the optional `action` query parameter.
+    OpenAPI cannot define separate operations for the same path+method with
+    different query values, so this spec models `player_api.php` as one operation
+    with an `action` enum and an `anyOf` response union.
+  x-source-notes:
+    - notes/common-report.md
+    - notes/public-protocol-research.md
+    - notes/xtream-api-coverage.md
+  x-confidence: compatibility-draft
+servers:
+  - url: "{scheme}://{host}:{port}"
+    description: Xtream-compatible panel base URL.
+    variables:
+      scheme:
+        default: http
+        enum:
+          - http
+          - https
+      host:
+        default: example.com
+      port:
+        default: "8080"
+security: []
+tags:
+  - name: Catalog
+    description: Account profile, channel categories, live streams, VOD, and series metadata.
+  - name: EPG
+    description: JSON EPG calls and XMLTV guide export.
+  - name: Playlist
+    description: M3U and M3U Plus playlist export.
+  - name: Playback
+    description: Direct media, HLS, and catchup playback URL patterns.
+paths:
+  /player_api.php:
+    get:
+      tags:
+        - Catalog
+        - EPG
+      operationId: getPlayerApi
+      summary: Xtream player API multiplexer.
+      description: |
+        Main JSON endpoint for authentication/profile, categories, streams,
+        VOD, series, and JSON EPG calls.
+
+        When `action` is omitted, panels usually return account profile data
+        containing `user_info` and `server_info`.
+      parameters:
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Password"
+        - name: action
+          in: query
+          required: false
+          description: Operation selector. Omit for login/profile.
+          schema:
+            type: string
+            enum:
+              - get_live_categories
+              - get_live_streams
+              - get_vod_categories
+              - get_vod_streams
+              - get_vod_info
+              - get_series_categories
+              - get_series
+              - get_series_info
+              - get_short_epg
+              - get_simple_data_table
+        - name: category_id
+          in: query
+          required: false
+          description: Optional category filter for stream/list endpoints.
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - name: stream_id
+          in: query
+          required: false
+          description: Live stream id for EPG actions.
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - name: vod_id
+          in: query
+          required: false
+          description: VOD stream id for `get_vod_info`.
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - name: series_id
+          in: query
+          required: false
+          description: Series id for `get_series_info`.
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - name: limit
+          in: query
+          required: false
+          description: Optional result limit for `get_short_epg`.
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: |
+            Successful JSON response. The schema depends on `action`.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/LoginResponse"
+                  - type: array
+                    title: CategoryList
+                    items:
+                      $ref: "#/components/schemas/Category"
+                  - type: array
+                    title: LiveStreamList
+                    items:
+                      $ref: "#/components/schemas/LiveStream"
+                  - type: array
+                    title: VodStreamList
+                    items:
+                      $ref: "#/components/schemas/VodStream"
+                  - type: array
+                    title: SeriesList
+                    items:
+                      $ref: "#/components/schemas/SeriesItem"
+                  - $ref: "#/components/schemas/VodInfoResponse"
+                  - $ref: "#/components/schemas/SeriesInfoResponse"
+                  - $ref: "#/components/schemas/EpgResponse"
+                  - $ref: "#/components/schemas/AuthFailureResponse"
+              examples:
+                profile:
+                  summary: Redacted account profile shape.
+                  value:
+                    user_info:
+                      username: "{username}"
+                      password: "{password}"
+                      auth: 1
+                      status: Active
+                      exp_date: "1814885516"
+                      is_trial: "0"
+                      active_cons: "0"
+                      max_connections: "1"
+                      allowed_output_formats:
+                        - m3u8
+                        - ts
+                        - rtmp
+                    server_info:
+                      url: example.com
+                      port: "8080"
+                      https_port: "25463"
+                      server_protocol: http
+                      rtmp_port: "25462"
+                      timezone: Europe/Paris
+                      process: true
+        "401":
+          description: "Optional HTTP-level auth failure. Many panels return HTTP 200 with `auth: 0` instead."
+        "404":
+          description: Endpoint unavailable on this panel.
+      x-xtream-actions:
+        omitted:
+          returns: LoginResponse
+          confidence: high
+        get_live_categories:
+          returns: Category[]
+          confidence: high
+        get_live_streams:
+          returns: LiveStream[]
+          optionalParameters:
+            - category_id
+          confidence: high
+        get_vod_categories:
+          returns: Category[]
+          confidence: high
+        get_vod_streams:
+          returns: VodStream[]
+          optionalParameters:
+            - category_id
+          confidence: high
+        get_vod_info:
+          returns: VodInfoResponse
+          requiredParameters:
+            - vod_id
+          confidence: high
+        get_series_categories:
+          returns: Category[]
+          confidence: high
+        get_series:
+          returns: SeriesItem[]
+          optionalParameters:
+            - category_id
+          confidence: high
+        get_series_info:
+          returns: SeriesInfoResponse
+          requiredParameters:
+            - series_id
+          confidence: high
+        get_short_epg:
+          returns: EpgResponse
+          requiredParameters:
+            - stream_id
+          optionalParameters:
+            - limit
+          confidence: high
+        get_simple_data_table:
+          returns: EpgResponse
+          requiredParameters:
+            - stream_id
+          confidence: high
+
+  /xmltv.php:
+    get:
+      tags:
+        - EPG
+      operationId: getXmltv
+      summary: Full XMLTV guide export.
+      description: |
+        Returns an XMLTV document. OpenAPI supports XML media types, but this
+        spec intentionally models the body as a string because XMLTV is governed
+        by its own DTD and panels may emit large provider-specific documents.
+      parameters:
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Password"
+      responses:
+        "200":
+          description: XMLTV guide.
+          content:
+            application/xml:
+              schema:
+                type: string
+                description: XMLTV document, usually starting with `<tv>`.
+              examples:
+                xmltv:
+                  value: |
+                    <?xml version="1.0" encoding="utf-8"?>
+                    <!DOCTYPE tv SYSTEM "xmltv.dtd">
+                    <tv generator-info-name="server">
+                      <channel id="example.channel">
+                        <display-name>Example Channel</display-name>
+                      </channel>
+                    </tv>
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+
+  /get.php:
+    get:
+      tags:
+        - Playlist
+      operationId: getPlaylist
+      summary: M3U/M3U Plus playlist export.
+      parameters:
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Password"
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - m3u
+              - m3u_plus
+          description: Playlist type. `m3u_plus` includes IPTV metadata attributes.
+        - name: output
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - ts
+              - m3u8
+              - hls
+              - rtmp
+          description: Preferred playback URL style in playlist entries.
+      responses:
+        "200":
+          description: M3U playlist text.
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                m3uPlus:
+                  value: |
+                    #EXTM3U
+                    #EXTINF:-1 tvg-id="" tvg-name="Example" tvg-logo="https://example.com/logo.png" group-title="News",Example
+                    http://example.com:8080/{username}/{password}/12345
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+
+  /live/{username}/{password}/{streamId}.{extension}:
+    get:
+      tags:
+        - Playback
+      operationId: getLiveStream
+      summary: Live stream playback URL.
+      parameters:
+        - $ref: "#/components/parameters/UsernamePath"
+        - $ref: "#/components/parameters/PasswordPath"
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - $ref: "#/components/parameters/MediaExtension"
+      responses:
+        "200":
+          description: Live media stream or HLS playlist.
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+            application/x-mpegURL:
+              schema:
+                type: string
+            application/vnd.apple.mpegurl:
+              schema:
+                type: string
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+      x-confidence: high
+
+  /movie/{username}/{password}/{vodId}.{extension}:
+    get:
+      tags:
+        - Playback
+      operationId: getMovieStream
+      summary: VOD/movie playback URL.
+      parameters:
+        - $ref: "#/components/parameters/UsernamePath"
+        - $ref: "#/components/parameters/PasswordPath"
+        - name: vodId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - $ref: "#/components/parameters/MediaExtension"
+      responses:
+        "200":
+          description: VOD media stream.
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+      x-confidence: high
+
+  /series/{username}/{password}/{episodeId}.{extension}:
+    get:
+      tags:
+        - Playback
+      operationId: getSeriesEpisodeStream
+      summary: Series episode playback URL.
+      parameters:
+        - $ref: "#/components/parameters/UsernamePath"
+        - $ref: "#/components/parameters/PasswordPath"
+        - name: episodeId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - $ref: "#/components/parameters/MediaExtension"
+      responses:
+        "200":
+          description: Episode media stream.
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+      x-confidence: high
+
+  /timeshift/{username}/{password}/{duration}/{start}/{streamId}.{extension}:
+    get:
+      tags:
+        - Playback
+      operationId: getTimeshiftStream
+      summary: Path-style catchup/timeshift playback URL.
+      description: |
+        Catchup format varies across providers. This path-style format is common
+        and appears in NOX/MyTV-style clients.
+      parameters:
+        - $ref: "#/components/parameters/UsernamePath"
+        - $ref: "#/components/parameters/PasswordPath"
+        - name: duration
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+          description: Duration in minutes or provider-specific duration token.
+        - name: start
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Provider-specific start time, often date/time formatted.
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - $ref: "#/components/parameters/MediaExtension"
+      responses:
+        "200":
+          description: Catchup media stream.
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+      x-confidence: medium
+
+  /streaming/timeshift.php:
+    get:
+      tags:
+        - Playback
+      operationId: getStreamingTimeshift
+      summary: Query-style catchup/timeshift playback URL.
+      description: Query-style format observed in IRON TV MAX / PRO APKs.
+      parameters:
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Password"
+        - name: stream
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Date/time string, commonly `yyyy-MM-dd:HH-mm`.
+        - name: duration
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+          description: Duration in minutes.
+      responses:
+        "200":
+          description: Catchup media stream.
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+      x-confidence: medium
+
+  /{username}/{password}/{streamId}:
+    get:
+      tags:
+        - Playback
+      operationId: getPanelShorthandLiveStream
+      summary: Panel shorthand live stream URL.
+      description: |
+        Some M3U exports use this shorter form instead of
+        `/live/{username}/{password}/{streamId}.ts`. It was observed on the
+        tested panel's M3U export and returned MPEG-TS media.
+      parameters:
+        - $ref: "#/components/parameters/UsernamePath"
+        - $ref: "#/components/parameters/PasswordPath"
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/StringOrInteger"
+      responses:
+        "200":
+          description: Live media stream.
+          content:
+            video/mp2t:
+              schema:
+                type: string
+                format: binary
+        "4XX":
+          $ref: "#/components/responses/ClientError"
+      x-confidence: medium
+
+components:
+  responses:
+    ClientError:
+      description: Client-side error, invalid credentials, unavailable media, or unsupported endpoint. Many panels return HTTP 200 with an error-like JSON body instead.
+
+  parameters:
+    Username:
+      name: username
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Xtream account username.
+    Password:
+      name: password
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Xtream account password.
+    UsernamePath:
+      name: username
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Xtream account username.
+    PasswordPath:
+      name: password
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Xtream account password.
+    MediaExtension:
+      name: extension
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - ts
+          - m3u8
+          - mp4
+          - mkv
+          - avi
+      description: Media extension/container requested by the client or returned by metadata.
+
+  schemas:
+    StringOrInteger:
+      oneOf:
+        - type: string
+        - type: integer
+
+    StringIntegerOrNull:
+      oneOf:
+        - type: string
+        - type: integer
+        - type: "null"
+
+    NumberStringOrNull:
+      oneOf:
+        - type: number
+        - type: string
+        - type: "null"
+
+    StringOrNull:
+      oneOf:
+        - type: string
+        - type: "null"
+
+    LoginResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - user_info
+        - server_info
+      properties:
+        user_info:
+          $ref: "#/components/schemas/UserInfo"
+        server_info:
+          $ref: "#/components/schemas/ServerInfo"
+
+    AuthFailureResponse:
+      type: object
+      additionalProperties: true
+      description: Common HTTP-200 auth failure shape. Exact shape varies by panel.
+      properties:
+        user_info:
+          type: object
+          additionalProperties: true
+          properties:
+            auth:
+              $ref: "#/components/schemas/StringOrInteger"
+            status:
+              type: string
+              examples:
+                - Disabled
+                - Expired
+                - Banned
+
+    UserInfo:
+      type: object
+      additionalProperties: true
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        message:
+          type: string
+        auth:
+          $ref: "#/components/schemas/StringOrInteger"
+        status:
+          type: string
+          examples:
+            - Active
+            - Expired
+            - Disabled
+        exp_date:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+          description: Unix timestamp, often encoded as a string.
+        is_trial:
+          $ref: "#/components/schemas/StringOrInteger"
+        active_cons:
+          $ref: "#/components/schemas/StringOrInteger"
+        created_at:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        max_connections:
+          $ref: "#/components/schemas/StringOrInteger"
+        allowed_output_formats:
+          type: array
+          items:
+            type: string
+            examples:
+              - m3u8
+              - ts
+              - rtmp
+
+    ServerInfo:
+      type: object
+      additionalProperties: true
+      properties:
+        url:
+          type: string
+        port:
+          $ref: "#/components/schemas/StringOrInteger"
+        https_port:
+          $ref: "#/components/schemas/StringOrInteger"
+        server_protocol:
+          type: string
+          enum:
+            - http
+            - https
+        rtmp_port:
+          $ref: "#/components/schemas/StringOrInteger"
+        timezone:
+          type: string
+        timestamp_now:
+          $ref: "#/components/schemas/StringOrInteger"
+        time_now:
+          type: string
+        process:
+          type: boolean
+
+    Category:
+      type: object
+      additionalProperties: true
+      properties:
+        category_id:
+          $ref: "#/components/schemas/StringOrInteger"
+        category_name:
+          type: string
+        parent_id:
+          $ref: "#/components/schemas/StringOrInteger"
+
+    LiveStream:
+      type: object
+      additionalProperties: true
+      properties:
+        num:
+          type: integer
+        name:
+          type: string
+        stream_type:
+          type: string
+          examples:
+            - live
+        stream_id:
+          $ref: "#/components/schemas/StringOrInteger"
+        stream_icon:
+          $ref: "#/components/schemas/StringOrNull"
+        epg_channel_id:
+          $ref: "#/components/schemas/StringOrNull"
+        added:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        is_adult:
+          $ref: "#/components/schemas/StringOrInteger"
+        category_id:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        custom_sid:
+          type: string
+        tv_archive:
+          $ref: "#/components/schemas/StringOrInteger"
+        direct_source:
+          type: string
+        tv_archive_duration:
+          $ref: "#/components/schemas/StringOrInteger"
+
+    VodStream:
+      type: object
+      additionalProperties: true
+      properties:
+        num:
+          type: integer
+        name:
+          type: string
+        stream_type:
+          type: string
+          examples:
+            - movie
+        stream_id:
+          $ref: "#/components/schemas/StringOrInteger"
+        stream_icon:
+          $ref: "#/components/schemas/StringOrNull"
+        rating:
+          $ref: "#/components/schemas/NumberStringOrNull"
+        rating_5based:
+          $ref: "#/components/schemas/NumberStringOrNull"
+        added:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        is_adult:
+          $ref: "#/components/schemas/StringOrInteger"
+        category_id:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        container_extension:
+          type: string
+          examples:
+            - mkv
+            - mp4
+        custom_sid:
+          type: string
+        direct_source:
+          type: string
+
+    SeriesItem:
+      type: object
+      additionalProperties: true
+      properties:
+        num:
+          type: integer
+        name:
+          type: string
+        series_id:
+          $ref: "#/components/schemas/StringOrInteger"
+        cover:
+          type: string
+        plot:
+          type: string
+        cast:
+          type: string
+        director:
+          type: string
+        genre:
+          type: string
+        releaseDate:
+          type: string
+        last_modified:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        rating:
+          $ref: "#/components/schemas/NumberStringOrNull"
+        rating_5based:
+          $ref: "#/components/schemas/NumberStringOrNull"
+        backdrop_path:
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+        youtube_trailer:
+          type: string
+        episode_run_time:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        category_id:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+
+    VodInfoResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        info:
+          $ref: "#/components/schemas/VodInfo"
+        movie_data:
+          $ref: "#/components/schemas/VodMovieData"
+
+    VodInfo:
+      type: object
+      additionalProperties: true
+      properties:
+        movie_image:
+          type: string
+        tmdb_id:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        backdrop:
+          type: string
+        youtube_trailer:
+          type: string
+        genre:
+          type: string
+        plot:
+          type: string
+        cast:
+          type: string
+        rating:
+          $ref: "#/components/schemas/NumberStringOrNull"
+        director:
+          type: string
+        releasedate:
+          type: string
+        backdrop_path:
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+            - type: "null"
+        duration_secs:
+          $ref: "#/components/schemas/StringOrInteger"
+        duration:
+          type: string
+        video:
+          type: object
+          additionalProperties: true
+        audio:
+          type: object
+          additionalProperties: true
+        bitrate:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+
+    VodMovieData:
+      type: object
+      additionalProperties: true
+      properties:
+        stream_id:
+          $ref: "#/components/schemas/StringOrInteger"
+        name:
+          type: string
+        added:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        category_id:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        container_extension:
+          type: string
+        custom_sid:
+          type: string
+        direct_source:
+          type: string
+
+    SeriesInfoResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        seasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/SeriesSeason"
+        info:
+          $ref: "#/components/schemas/SeriesItem"
+        episodes:
+          type: object
+          description: Object keyed by season number; values are episode arrays.
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/SeriesEpisode"
+
+    SeriesSeason:
+      type: object
+      additionalProperties: true
+      properties:
+        air_date:
+          type: string
+        episode_count:
+          $ref: "#/components/schemas/StringOrInteger"
+        id:
+          $ref: "#/components/schemas/StringOrInteger"
+        name:
+          type: string
+        overview:
+          type: string
+        season_number:
+          $ref: "#/components/schemas/StringOrInteger"
+        cover:
+          type: string
+        cover_big:
+          type: string
+
+    SeriesEpisode:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          $ref: "#/components/schemas/StringOrInteger"
+        episode_num:
+          $ref: "#/components/schemas/StringOrInteger"
+        title:
+          type: string
+        container_extension:
+          type: string
+        info:
+          type: object
+          additionalProperties: true
+        custom_sid:
+          type: string
+        added:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        season:
+          $ref: "#/components/schemas/StringOrInteger"
+        direct_source:
+          type: string
+
+    EpgResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        epg_listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/EpgListing"
+
+    EpgListing:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          $ref: "#/components/schemas/StringOrInteger"
+        epg_id:
+          $ref: "#/components/schemas/StringOrInteger"
+        title:
+          type: string
+          description: Often base64-encoded by Xtream panels.
+        lang:
+          type: string
+        start:
+          type: string
+          description: Provider-formatted date/time string.
+        end:
+          type: string
+          description: Provider-formatted date/time string.
+        description:
+          type: string
+          description: Often base64-encoded by Xtream panels.
+        channel_id:
+          $ref: "#/components/schemas/StringIntegerOrNull"
+        start_timestamp:
+          $ref: "#/components/schemas/StringOrInteger"
+        stop_timestamp:
+          $ref: "#/components/schemas/StringOrInteger"
+        now_playing:
+          $ref: "#/components/schemas/StringOrInteger"
+        has_archive:
+          $ref: "#/components/schemas/StringOrInteger"
