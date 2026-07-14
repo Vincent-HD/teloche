@@ -1,0 +1,28 @@
+{
+  "name": "teloche",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "nub@0.4.11",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "cd apps/backend && nub run dev",
+    "dev:tv": "cd apps/tv && nub run start",
+    "android:tv": "cd apps/tv && nub run android",
+    "prebuild:tv": "cd apps/tv && nub run prebuild:tv",
+    "test": "cd apps/backend && nub run test",
+    "versions": "node --version && nub --version"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "nub",
+      "version": "0.4.11",
+      "onFail": "warn"
+    }
+  }
+}
