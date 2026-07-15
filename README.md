@@ -36,7 +36,7 @@ nub run dev:tv
 nub run android:tv
 nub run prebuild:tv
 nub run dev:backend
+nub run dev:xtream-docs
 nub run test
 nub run versions
 ```
-

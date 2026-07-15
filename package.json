@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev:backend": "cd apps/backend && nub run dev",
+    "dev:xtream-docs": "cd apps/backend && nub run dev:xtream-docs",
     "dev:tv": "cd apps/tv && nub run start",
     "android:tv": "cd apps/tv && nub run android",
     "prebuild:tv": "cd apps/tv && nub run prebuild:tv",

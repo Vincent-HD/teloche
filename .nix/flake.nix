@@ -3,10 +3,9 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nub.url = "github:nubjs/nub";
   };
 
-  outputs = { self, nixpkgs, nub }:
+  outputs = { self, nixpkgs }:
     let
       systems = [
         "x86_64-linux"
@@ -29,7 +28,7 @@
         default = pkgs.mkShell {
           packages = [
             pkgs.nodejs_24
-            nub.packages.${system}.nub
+            (import ./nub.nix { inherit pkgs system; })
             pkgs.jdk17
             pkgs.android-tools
             pkgs.git

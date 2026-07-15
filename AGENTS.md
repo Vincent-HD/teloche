@@ -1,5 +1,11 @@
 # Agent Notes
 
+## Local Effect Source
+
+The Effect v4 repository is cloned to `~/.local/share/effect-solutions/effect`
+for reference. Use this to explore APIs, find usage examples, and understand
+implementation details when the documentation is not enough.
+
 ## Project Goal
 
 This repository is for investigating an IPTV Android APK that the user will provide.

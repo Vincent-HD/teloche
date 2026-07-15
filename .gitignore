@@ -8,6 +8,7 @@ node_modules/
 .expo/
 dist/
 coverage/
+*.tsbuildinfo
 android/
 ios/
 expo-env.d.ts
