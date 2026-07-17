@@ -12,11 +12,14 @@
   ],
   "scripts": {
     "dev:backend": "cd apps/backend && nub run dev",
+    "dev:backend-worker": "cd apps/backend && nub run dev:worker",
     "dev:xtream-docs": "cd apps/backend && nub run dev:xtream-docs",
     "dev:tv": "cd apps/tv && nub run start",
     "android:tv": "cd apps/tv && nub run android",
+    "db:generate": "cd apps/backend && nub run db:generate",
     "prebuild:tv": "cd apps/tv && nub run prebuild:tv",
     "test": "cd apps/backend && nub run test",
+    "typecheck:backend": "cd apps/backend && nub run typecheck",
     "versions": "node --version && nub --version"
   },
   "devEngines": {

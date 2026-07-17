@@ -22,6 +22,8 @@
     ]
   },
   "include": [
+    "alchemy.run.ts",
+    "drizzle.config.ts",
     "src/**/*.ts"
   ]
 }

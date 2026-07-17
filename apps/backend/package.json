@@ -8,18 +8,29 @@
   },
   "scripts": {
     "dev": "node --watch src/xtream-docs.ts",
+    "dev:worker": "alchemy dev",
     "dev:xtream-docs": "node --watch src/xtream-docs.ts",
+    "deploy:worker": "alchemy deploy",
+    "destroy:worker": "alchemy destroy",
+    "db:generate": "drizzle-kit generate",
     "start": "node src/xtream-docs.ts",
     "start:xtream-docs": "node src/xtream-docs.ts",
     "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.0-beta.98",
-    "effect": "4.0.0-beta.98"
+    "alchemy": "2.0.0-beta.63",
+    "drizzle-orm": "0.45.2",
+    "effect": "4.0.0-beta.98",
+    "kysely": "0.29.4",
+    "kysely-d1": "0.4.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "5.20260717.1",
     "@types/node": "24.13.3",
+    "drizzle-kit": "0.31.10",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   }
