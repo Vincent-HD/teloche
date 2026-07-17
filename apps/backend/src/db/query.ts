@@ -1,11 +1,11 @@
-import type { D1Database } from "@cloudflare/workers-types";
 import * as Effect from "effect/Effect";
-import { makeDatabase } from "./client.ts";
+import type { Kysely } from "kysely";
+import type { Database } from "./types.ts";
 
-export const countExampleItems = (database: D1Database) =>
+export const countExampleItems = (database: Kysely<Database>) =>
   Effect.tryPromise({
     try: () =>
-      makeDatabase(database)
+      database
         .selectFrom("example_items")
         .select((expression) => expression.fn.countAll<number>().as("count"))
         .executeTakeFirstOrThrow(),

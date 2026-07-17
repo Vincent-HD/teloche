@@ -6,7 +6,8 @@ Monorepo for the Teloche Android TV client and backend.
 
 - Package manager / script runner: Nub
 - App: Expo TV template with `react-native-tvos`
-- Backend: Node.js 24 native TypeScript, no build step
+- Backend: Effect 4 on Cloudflare Workers with D1; Wrangler handles TypeScript
+  locally and Alchemy handles deployment, with no separate build script
 - Backend test runner: Vitest
 - Backend effect system: Effect v4 beta, codename "smol"
 - Dev environment: Nix flakes + direnv
@@ -15,7 +16,7 @@ Monorepo for the Teloche Android TV client and backend.
 
 ```text
 apps/tv        Expo React Native TV app
-apps/backend   Node.js API backend
+apps/backend   Effect API on Cloudflare Workers
 ```
 
 ## Setup
@@ -37,6 +38,11 @@ nub run android:tv
 nub run prebuild:tv
 nub run dev:backend
 nub run dev:xtream-docs
+nub run db:migrate:local
 nub run test
 nub run versions
 ```
+
+`dev:backend` applies pending migrations to Wrangler's isolated local D1 and
+starts the same Cloudflare Worker entry point that Alchemy deploys. Xtream API
+documentation remains available separately through `dev:xtream-docs`.

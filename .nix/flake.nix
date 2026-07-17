@@ -45,7 +45,7 @@
             echo "java: $(java -version 2>&1 | head -n 1)"
             echo "adb: $(adb version | head -n 1 || true)"
             echo "expo tv: apps/tv uses react-native = npm:react-native-tvos@0.85.3-3"
-            echo "backend: Node 24 native TypeScript, no build step"
+            echo "backend: Effect 4 Worker + Wrangler local D1 (no separate build script)"
             echo "scripts: run with nub, e.g. nub run dev:tv or nub run dev:backend"
           '';
         };

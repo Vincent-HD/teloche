@@ -18,12 +18,17 @@
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true,
     "types": [
-      "node"
+      "node",
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-pool-workers/types"
     ]
   },
   "include": [
     "alchemy.run.ts",
     "drizzle.config.ts",
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "vitest.config.ts",
+    "worker-configuration.d.ts"
   ]
 }

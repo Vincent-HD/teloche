@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "teloche-backend",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-07-17",
+  // Wrangler owns isolated local development; Alchemy owns production deploys.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "teloche-backend-local",
+      "database_id": "local",
+      "migrations_dir": "./migrations"
+    }
+  ]
+}
