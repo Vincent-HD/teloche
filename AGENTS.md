@@ -77,6 +77,8 @@ Start with these repository notes before repeating discovery work:
   create the OpenAPI draft.
 - `openapi/xtream-compatible.yaml`: current unofficial OpenAPI 3.1 draft for
   the Xtream-compatible API surface.
+- `docs/catalog-sync.md`: provider-neutral catalog tables, synchronization
+  lifecycle, Xtream normalization boundary, and intentionally deferred data.
 - `notes/api-map.md`: detailed NOX-focused endpoint map with code references
   into `out/jadx` and `out/apktool`.
 - `notes/noxpro.md`: NOX PRO APK findings, including bootstrap and activation

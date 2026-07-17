@@ -1,15 +1,14 @@
 import * as Effect from "effect/Effect";
 import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
-import { countExampleItems } from "./db/query.ts";
-import { DatabaseClient } from "./db/service.ts";
+import { CatalogRepository } from "./catalog/repository.ts";
 
 const databaseHealth = Effect.gen(function* () {
-  const database = yield* DatabaseClient;
-  const itemCount = yield* countExampleItems(database);
+  const repository = yield* CatalogRepository;
+  const sourceCount = yield* repository.countSources;
 
   return yield* HttpServerResponse.json({
     database: "ok",
-    itemCount,
+    sourceCount,
   });
 }).pipe(
   Effect.tapError((cause) => Effect.logError("Database health check failed", cause)),
