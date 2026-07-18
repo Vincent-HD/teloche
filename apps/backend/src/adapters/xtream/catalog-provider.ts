@@ -117,7 +117,7 @@ export const normalizeXtreamLiveCatalog = (
   }),
 });
 
-const playerApiUrl = (endpoint: URL) => {
+export const playerApiUrl = (endpoint: URL) => {
   if (endpoint.pathname.endsWith("/player_api.php")) {
     return endpoint;
   }

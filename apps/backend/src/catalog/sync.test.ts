@@ -82,11 +82,31 @@ const cleanDatabase = () =>
     workerEnvironment.DB.prepare("DELETE FROM collections"),
     workerEnvironment.DB.prepare("DELETE FROM catalog_items"),
     workerEnvironment.DB.prepare("DELETE FROM sync_runs"),
+    workerEnvironment.DB.prepare("DELETE FROM source_credentials"),
     workerEnvironment.DB.prepare("DELETE FROM sources"),
+    workerEnvironment.DB.prepare("DELETE FROM household_memberships"),
+    workerEnvironment.DB.prepare("DELETE FROM households"),
+    workerEnvironment.DB.prepare("DELETE FROM users"),
+  ]);
+
+const seedHousehold = () =>
+  workerEnvironment.DB.batch([
+    workerEnvironment.DB.prepare(
+      "INSERT INTO users (id, display_name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+    ).bind("user-1", "Test User", 1, 1),
+    workerEnvironment.DB.prepare(
+      "INSERT INTO households (id, name, created_by_user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+    ).bind("household-1", "Test Household", "user-1", 1, 1),
+    workerEnvironment.DB.prepare(
+      "INSERT INTO household_memberships (household_id, user_id, role, created_at) VALUES (?, ?, ?, ?)",
+    ).bind("household-1", "user-1", "owner", 1),
   ]);
 
 describe("catalog synchronization", () => {
-  beforeEach(cleanDatabase);
+  beforeEach(async () => {
+    await cleanDatabase();
+    await seedHousehold();
+  });
 
   it.effect("synchronizes a provider-neutral catalog snapshot", () =>
     Effect.gen(function* () {
@@ -96,6 +116,7 @@ describe("catalog synchronization", () => {
 
       yield* repository.upsertSource({
         id: "source-1",
+        householdId: "household-1",
         adapterKey: "fixture",
         name: "Fixture provider",
         endpoint: "https://provider.example",
@@ -183,6 +204,7 @@ describe("catalog synchronization", () => {
 
       yield* repository.upsertSource({
         id: "source-1",
+        householdId: "household-1",
         adapterKey: "fixture",
         name: "Fixture provider",
         endpoint: "https://provider.example",
@@ -241,6 +263,7 @@ describe("catalog synchronization", () => {
 
       yield* repository.upsertSource({
         id: "source-1",
+        householdId: "household-1",
         adapterKey: "fixture",
         name: "Fixture provider",
         endpoint: "https://provider.example",
@@ -273,6 +296,7 @@ describe("catalog synchronization", () => {
 
       yield* repository.upsertSource({
         id: "source-1",
+        householdId: "household-1",
         adapterKey: "fixture",
         name: "Fixture provider",
         endpoint: "https://provider.example",
@@ -336,6 +360,7 @@ describe("catalog synchronization", () => {
       const repository = makeCatalogRepository(connection);
       yield* repository.upsertSource({
         id: "source-1",
+        householdId: "household-1",
         adapterKey: "fixture",
         name: "Fixture provider",
         endpoint: "https://provider.example",

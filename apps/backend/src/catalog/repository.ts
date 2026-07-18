@@ -19,6 +19,7 @@ export class CatalogRepositoryError extends Data.TaggedError("CatalogRepositoryE
 
 export interface SourceInput {
   readonly id: string;
+  readonly householdId: string;
   readonly adapterKey: string;
   readonly name: string;
   readonly endpoint: string;
@@ -46,6 +47,27 @@ export interface FailSyncInput {
   readonly errorMessage: string;
 }
 
+export interface CatalogCollectionRecord {
+  readonly id: string;
+  readonly parentId?: string;
+  readonly name: string;
+  readonly contentKind: ContentKind;
+  readonly position: number;
+}
+
+export interface CatalogChannelRecord {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly externalId: string;
+  readonly name: string;
+  readonly artworkUrl?: string;
+  readonly position: number;
+  readonly guideChannelId?: string;
+  readonly isAdult: boolean;
+  readonly catchupEnabled: boolean;
+  readonly catchupWindowSeconds?: number;
+}
+
 export interface CatalogRepositoryService {
   readonly upsertSource: (source: SourceInput, now: number) => Effect.Effect<void, CatalogRepositoryError>;
   readonly beginSync: (
@@ -56,6 +78,20 @@ export interface CatalogRepositoryService {
   readonly reconcile: (input: ReconcileInput) => Effect.Effect<void, CatalogRepositoryError>;
   readonly completeSync: (input: CompleteSyncInput) => Effect.Effect<void, CatalogRepositoryError>;
   readonly failSync: (input: FailSyncInput) => Effect.Effect<void, CatalogRepositoryError>;
+  readonly listCollections: (
+    sourceId: string,
+    contentKind: ContentKind,
+  ) => Effect.Effect<ReadonlyArray<CatalogCollectionRecord>, CatalogRepositoryError>;
+  readonly listChannels: (input: {
+    readonly sourceId: string;
+    readonly collectionId?: string;
+    readonly limit: number;
+    readonly offset: number;
+  }) => Effect.Effect<ReadonlyArray<CatalogChannelRecord>, CatalogRepositoryError>;
+  readonly findChannel: (
+    sourceId: string,
+    channelId: string,
+  ) => Effect.Effect<CatalogChannelRecord | undefined, CatalogRepositoryError>;
   readonly countSources: Effect.Effect<number, CatalogRepositoryError>;
 }
 
@@ -112,6 +148,7 @@ export const makeCatalogRepository = (connection: DatabaseConnection): CatalogRe
         .insertInto("sources")
         .values({
           id: source.id,
+          household_id: source.householdId,
           adapter_key: source.adapterKey,
           name: source.name,
           endpoint: source.endpoint,
@@ -121,6 +158,7 @@ export const makeCatalogRepository = (connection: DatabaseConnection): CatalogRe
         })
         .onConflict((conflict) =>
           conflict.column("id").doUpdateSet({
+            household_id: source.householdId,
             adapter_key: source.adapterKey,
             name: source.name,
             endpoint: source.endpoint,
@@ -411,12 +449,116 @@ export const makeCatalogRepository = (connection: DatabaseConnection): CatalogRe
       .executeTakeFirstOrThrow()
       .then(({ count }) => Number(count)));
 
+  const channelSelection = [
+    "source_items.id",
+    "source_items.source_id",
+    "source_items.external_id",
+    "source_items.source_name",
+    "source_items.source_artwork_url",
+    "source_items.provider_position",
+    "source_channel_details.guide_channel_id",
+    "source_channel_details.is_adult",
+    "source_channel_details.catchup_enabled",
+    "source_channel_details.catchup_window_seconds",
+  ] as const;
+
+  const mapChannel = (row: {
+    readonly id: string;
+    readonly source_id: string;
+    readonly external_id: string;
+    readonly source_name: string;
+    readonly source_artwork_url: string | null;
+    readonly provider_position: number;
+    readonly guide_channel_id: string | null;
+    readonly is_adult: boolean | number;
+    readonly catchup_enabled: boolean | number;
+    readonly catchup_window_seconds: number | null;
+  }): CatalogChannelRecord => ({
+    id: row.id,
+    sourceId: row.source_id,
+    externalId: row.external_id,
+    name: row.source_name,
+    ...(row.source_artwork_url === null ? {} : { artworkUrl: row.source_artwork_url }),
+    position: row.provider_position,
+    ...(row.guide_channel_id === null ? {} : { guideChannelId: row.guide_channel_id }),
+    isAdult: Boolean(row.is_adult),
+    catchupEnabled: Boolean(row.catchup_enabled),
+    ...(row.catchup_window_seconds === null
+      ? {}
+      : { catchupWindowSeconds: row.catchup_window_seconds }),
+  });
+
+  const listCollections: CatalogRepositoryService["listCollections"] = (sourceId, contentKind) =>
+    databaseEffect("list catalog collections", () =>
+      database
+        .selectFrom("collections")
+        .select(["id", "parent_id", "name", "content_kind", "position"])
+        .where("source_id", "=", sourceId)
+        .where("content_kind", "=", contentKind)
+        .where("active", "=", true)
+        .orderBy("position")
+        .execute()
+        .then((rows) => rows.map((row) => ({
+          id: row.id,
+          ...(row.parent_id === null ? {} : { parentId: row.parent_id }),
+          name: row.name,
+          contentKind: row.content_kind as ContentKind,
+          position: row.position,
+        }))));
+
+  const listChannels: CatalogRepositoryService["listChannels"] = (input) =>
+    databaseEffect("list catalog channels", async () => {
+      const base = database
+        .selectFrom("source_items")
+        .innerJoin(
+          "source_channel_details",
+          "source_channel_details.source_item_id",
+          "source_items.id",
+        );
+      const scoped = input.collectionId === undefined
+        ? base
+        : base
+          .innerJoin("collection_items", "collection_items.source_item_id", "source_items.id")
+          .where("collection_items.collection_id", "=", input.collectionId);
+      const rows = await scoped
+        .select(channelSelection)
+        .where("source_items.source_id", "=", input.sourceId)
+        .where("source_items.content_kind", "=", "channel")
+        .where("source_items.active", "=", true)
+        .orderBy("source_items.provider_position")
+        .orderBy("source_items.id")
+        .limit(input.limit)
+        .offset(input.offset)
+        .execute();
+      return rows.map(mapChannel);
+    });
+
+  const findChannel: CatalogRepositoryService["findChannel"] = (sourceId, channelId) =>
+    databaseEffect("find catalog channel", () =>
+      database
+        .selectFrom("source_items")
+        .innerJoin(
+          "source_channel_details",
+          "source_channel_details.source_item_id",
+          "source_items.id",
+        )
+        .select(channelSelection)
+        .where("source_items.source_id", "=", sourceId)
+        .where("source_items.id", "=", channelId)
+        .where("source_items.content_kind", "=", "channel")
+        .where("source_items.active", "=", true)
+        .executeTakeFirst()
+        .then((row) => row === undefined ? undefined : mapChannel(row)));
+
   return {
     upsertSource,
     beginSync,
     reconcile,
     completeSync,
     failSync,
+    listCollections,
+    listChannels,
+    findChannel,
     countSources,
   };
 };

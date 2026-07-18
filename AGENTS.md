@@ -90,6 +90,12 @@ Start with these repository notes before repeating discovery work:
   modes.
 - `notes/investigation-log.md`: reproducible command log, decode locations,
   probe summaries, and generated-output paths.
+- `docs/catalog-sync.md`: provider-neutral catalog persistence and synchronization
+  lifecycle.
+- `docs/backend-api.md`: household ownership, encrypted source credentials,
+  current API surface, direct-playback trade-offs, and deferred work.
+- `docs/todo.md`: prioritized active implementation queue; update it whenever
+  scoped work starts, changes, or completes.
 
 ## Nix Tooling
 
