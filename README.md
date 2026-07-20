@@ -54,3 +54,7 @@ The multi-user source, encrypted-credential, catalog, and playback API design
 is described in [`docs/backend-api.md`](docs/backend-api.md).
 
 The active implementation queue is in [`docs/todo.md`](docs/todo.md).
+
+For a comprehensive French review of the implemented backend, data model,
+Xtream synchronization flow, terminology, and remaining work, see
+[`docs/revue-architecture.md`](docs/revue-architecture.md).

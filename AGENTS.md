@@ -96,6 +96,8 @@ Start with these repository notes before repeating discovery work:
   current API surface, direct-playback trade-offs, and deferred work.
 - `docs/todo.md`: prioritized active implementation queue; update it whenever
   scoped work starts, changes, or completes.
+- `docs/revue-architecture.md`: French architecture review covering the current
+  backend, database model, Xtream synchronization, glossary, and deferred work.
 
 ## Nix Tooling
 
