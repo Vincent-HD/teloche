@@ -1,7 +1,6 @@
 import * as Context from "effect/Context";
-import type { Kysely } from "kysely";
-import type { Database } from "./types.ts";
+import type { DatabaseConnection } from "./client.ts";
 
-export class DatabaseClient extends Context.Service<DatabaseClient, Kysely<Database>>()(
+export class DatabaseClient extends Context.Service<DatabaseClient, DatabaseConnection>()(
   "teloche/DatabaseClient",
 ) {}

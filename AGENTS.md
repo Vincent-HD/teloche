@@ -5,7 +5,7 @@
 The Effect v4 repository is cloned to `~/.local/share/effect-solutions/effect`
 for reference. Use this to explore APIs, find usage examples, and understand
 implementation details when the documentation is not enough.
-
+qsdqsdqsd
 ## Project Goal
 
 This repository is for investigating an IPTV Android APK that the user will provide.
@@ -77,6 +77,8 @@ Start with these repository notes before repeating discovery work:
   create the OpenAPI draft.
 - `openapi/xtream-compatible.yaml`: current unofficial OpenAPI 3.1 draft for
   the Xtream-compatible API surface.
+- `docs/catalog-sync.md`: provider-neutral catalog tables, synchronization
+  lifecycle, Xtream normalization boundary, and intentionally deferred data.
 - `notes/api-map.md`: detailed NOX-focused endpoint map with code references
   into `out/jadx` and `out/apktool`.
 - `notes/noxpro.md`: NOX PRO APK findings, including bootstrap and activation
@@ -88,6 +90,14 @@ Start with these repository notes before repeating discovery work:
   modes.
 - `notes/investigation-log.md`: reproducible command log, decode locations,
   probe summaries, and generated-output paths.
+- `docs/catalog-sync.md`: provider-neutral catalog persistence and synchronization
+  lifecycle.
+- `docs/backend-api.md`: household ownership, encrypted source credentials,
+  current API surface, direct-playback trade-offs, and deferred work.
+- `docs/todo.md`: prioritized active implementation queue; update it whenever
+  scoped work starts, changes, or completes.
+- `docs/revue-architecture.md`: French architecture review covering the current
+  backend, database model, Xtream synchronization, glossary, and deferred work.
 
 ## Nix Tooling
 

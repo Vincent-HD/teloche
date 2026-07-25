@@ -13,6 +13,7 @@ export default defineConfig({
       },
       miniflare: {
         bindings: {
+          TELOCHE_CREDENTIAL_MASTER_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
           TEST_MIGRATIONS: await readD1Migrations(
             fileURLToPath(new URL("./migrations", import.meta.url)),
           ),

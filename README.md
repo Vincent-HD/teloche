@@ -46,3 +46,15 @@ nub run versions
 `dev:backend` applies pending migrations to Wrangler's isolated local D1 and
 starts the same Cloudflare Worker entry point that Alchemy deploys. Xtream API
 documentation remains available separately through `dev:xtream-docs`.
+
+The provider-neutral catalog schema and synchronization lifecycle are described
+in [`docs/catalog-sync.md`](docs/catalog-sync.md).
+
+The multi-user source, encrypted-credential, catalog, and playback API design
+is described in [`docs/backend-api.md`](docs/backend-api.md).
+
+The active implementation queue is in [`docs/todo.md`](docs/todo.md).
+
+For a comprehensive French review of the implemented backend, data model,
+Xtream synchronization flow, terminology, and remaining work, see
+[`docs/revue-architecture.md`](docs/revue-architecture.md).

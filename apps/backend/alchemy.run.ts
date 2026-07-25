@@ -1,14 +1,19 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import { BackendDatabase } from "./src/db/resource.ts";
 
 export const BackendWorker = Effect.gen(function* () {
   const database = yield* BackendDatabase;
+  const credentialMasterKey = Config.redacted("TELOCHE_CREDENTIAL_MASTER_KEY");
 
   return yield* Cloudflare.Worker("BackendWorker", {
     main: "./src/worker.ts",
-    env: { DB: database },
+    env: {
+      DB: database,
+      TELOCHE_CREDENTIAL_MASTER_KEY: credentialMasterKey,
+    },
   });
 });
 
