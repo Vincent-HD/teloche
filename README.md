@@ -1,60 +1,24 @@
 # Teloche
 
-Monorepo for the Teloche Android TV client and backend.
+Teloche is an alternative IPTV client, based on the behavior observed in the
+reference APKs in this repository.
 
-## Stack
+The application code has intentionally been reset. We are rebuilding it one
+small decision at a time, starting with the meaning and validation of a single
+Xtream source. The first design step is in
+[`docs/00-xtream-source.md`](docs/00-xtream-source.md).
 
-- Package manager / script runner: Nub
-- App: Expo TV template with `react-native-tvos`
-- Backend: Effect 4 on Cloudflare Workers with D1; Wrangler handles TypeScript
-  locally and Alchemy handles deployment, with no separate build script
-- Backend test runner: Vitest
-- Backend effect system: Effect v4 beta, codename "smol"
-- Dev environment: Nix flakes + direnv
+The retained discovery material is in [`notes/`](notes/), with the unofficial
+Xtream API draft in [`openapi/xtream-compatible.yaml`](openapi/xtream-compatible.yaml).
 
-## Workspaces
+## Development environment
 
-```text
-apps/tv        Expo React Native TV app
-apps/backend   Effect API on Cloudflare Workers
-```
-
-## Setup
+The agreed Nix + direnv + Nub environment remains available:
 
 ```sh
 direnv allow
-nub install --ignore-scripts
+nix develop ./.nix
 ```
 
-`--ignore-scripts` avoids optional native install scripts during the initial
-bootstrap. Revisit build-script approvals when we add dependencies that require
-native postinstall work.
-
-## Commands
-
-```sh
-nub run dev:tv
-nub run android:tv
-nub run prebuild:tv
-nub run dev:backend
-nub run dev:xtream-docs
-nub run db:migrate:local
-nub run test
-nub run versions
-```
-
-`dev:backend` applies pending migrations to Wrangler's isolated local D1 and
-starts the same Cloudflare Worker entry point that Alchemy deploys. Xtream API
-documentation remains available separately through `dev:xtream-docs`.
-
-The provider-neutral catalog schema and synchronization lifecycle are described
-in [`docs/catalog-sync.md`](docs/catalog-sync.md).
-
-The multi-user source, encrypted-credential, catalog, and playback API design
-is described in [`docs/backend-api.md`](docs/backend-api.md).
-
-The active implementation queue is in [`docs/todo.md`](docs/todo.md).
-
-For a comprehensive French review of the implemented backend, data model,
-Xtream synchronization flow, terminology, and remaining work, see
-[`docs/revue-architecture.md`](docs/revue-architecture.md).
+No application dependency installation is needed yet. We will add it only when
+the first implementation step has been agreed.
